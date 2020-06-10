@@ -1,0 +1,52 @@
+---
+title: "Creating maps"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# install.packages("pacman")
+library(pacman)
+
+# load packages
+p_load(mapproj,
+       tidyverse)
+```
+
+```{r}
+# county boundaries
+counties <- map_data("county") %>% 
+  filter(region == "kansas")
+
+# covid 19 data for kansas
+# Data: new york times
+covid19_ks <- read_csv("data/us-counties.csv") %>% 
+  filter(state == "Kansas") %>% 
+  mutate(region = str_to_lower(state),
+         subregion = str_to_lower(county)) %>% 
+  group_by(subregion) %>% 
+  summarize(total_deaths = sum(deaths))
+
+# join two data frames
+comb_data <- counties %>% 
+  left_join(covid19_ks, by = "subregion") %>% 
+  replace_na(list(total_deaths = 0))
+
+# create the map
+comb_data %>% 
+  ggplot(mapping = aes(x = long,
+                       y = lat)) +
+  geom_polygon(mapping = aes(group = group, fill = total_deaths),
+               color = "black") +
+  coord_map("albers", lat0 = 45.5, lat1 = 29.5) +
+  scale_fill_distiller(palette = 2, direction = 1) +
+  labs(fill = "Deaths",
+       caption = "Data source: The New York Times",
+       title = "Deaths due to covid-19 by county")
+```
+
+
+

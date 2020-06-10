@@ -1,0 +1,50 @@
+---
+title: "Area under the disease progress curve (AUDPC)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## AUDPC is a measure of disease intensity over time.
+
+```{r}
+library(pacman)
+
+# load packages
+p_load(agricolae, 
+       tidyverse)
+
+# audpc
+time <- c(14, 21, 28) # days after planting or days after inoculation
+
+disease <- c(40, 80, 90) # e.g. it could disease severity or disease incidece
+
+# test the audpc function
+audpc(evaluation = disease,
+      dates = time)
+
+# make a data frame
+example_data <- data.frame(time = time,
+                          disease = disease)
+
+example_data %>% 
+  ggplot(mapping = aes(x = time,
+                       y = disease))+
+  geom_area(color = "black",
+            fill = "lightgreen")
+
+# calculate audpc on a grouped data frame
+audpc_data <- read_csv("data/audpc_data.csv")
+
+audpc_by_trt <- audpc_data %>% 
+  group_by(trt, rep) %>% 
+  group_modify(~ enframe(audpc(.x$severity, .x$day),
+                         value = "AUDPC"))
+
+#write_csv(audpc_by_trt, path = "data/audpc-calculated.csv")
+
+```
+
+
